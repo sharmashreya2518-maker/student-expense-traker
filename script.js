@@ -1,232 +1,198 @@
-
-const form = document.getElementById("expense-form");
-const expenseName = document.getElementById("expense-name");
-const expenseAmount = document.getElementById("expense-amount");
-const category = document.getElementById("category");
-const expenseList = document.getElementById("expense-list");
-
-const budgetForm = document.getElementById("budget-form");
-const budgetInput = document.getElementById("budget-amount");
-const budgetDisplay = document.getElementById("budget-display");
-const totalDisplay = document.getElementById("total");
-const remainingDisplay = document.getElementById("remaining");
-const progressBar = document.getElementById("progress-bar");
-const budgetMessage = document.getElementById("budget-message");
-const emptyMessage = document.getElementById("empty-message");
-
-// Get the current month, for example: 2026-10
-const now = new Date();
-const currentMonth =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2, "0");
-
-// Load saved expenses
-let expenses = [];
-
-try {
-    const savedExpenses = JSON.parse(
-        localStorage.getItem("myExpenses") || "[]"
-    );
-
-    if (Array.isArray(savedExpenses)) {
-        expenses = savedExpenses
-            .filter(function(item) {
-                return item &&
-                    typeof item.name === "string" &&
-                    Number.isFinite(Number(item.amount)) &&
-                    Number(item.amount) > 0;
-            })
-            .map(function(item) {
-                return {
-                    id: item.id || Date.now() + Math.random(),
-                    name: item.name,
-                    amount: Number(item.amount),
-                    category: item.category || "Other",
-                    date: item.date || currentMonth
-                };
-            });
-    }
-} catch (error) {
-    expenses = [];
+* {
+  box-sizing: border-box;
 }
 
-// Load budgets saved for different months
-let budgets = {};
-
-try {
-    const savedBudgets = JSON.parse(
-        localStorage.getItem("myBudgets") || "{}"
-    );
-
-    if (
-        savedBudgets &&
-        typeof savedBudgets === "object" &&
-        !Array.isArray(savedBudgets)
-    ) {
-        budgets = savedBudgets;
-    }
-} catch (error) {
-    budgets = {};
+body {
+  margin: 0;
+  padding: 24px 16px;
+  font-family: Arial, sans-serif;
+  color: #1f2937;
+  background: #f3f4f6;
 }
 
-// Current month's budget
-let monthlyBudget = Number(budgets[currentMonth]) || 0;
-
-// Save expenses
-function saveExpenses() {
-    localStorage.setItem("myExpenses", JSON.stringify(expenses));
+.app {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-// Save budgets
-function saveBudgets() {
-    localStorage.setItem("myBudgets", JSON.stringify(budgets));
+header {
+  margin-bottom: 24px;
+  text-align: center;
 }
 
-// Update the budget, spending and remaining balance
-function updateBudgetSummary() {
-    const monthlyExpenses = expenses.filter(function(expense) {
-        return expense.date === currentMonth;
-    });
-
-    const total = monthlyExpenses.reduce(function(sum, expense) {
-        return sum + expense.amount;
-    }, 0);
-
-    const remaining = monthlyBudget - total;
-
-    budgetDisplay.textContent = monthlyBudget.toFixed(2);
-    totalDisplay.textContent = total.toFixed(2);
-    remainingDisplay.textContent = remaining.toFixed(2);
-
-    if (monthlyBudget > 0) {
-        const percentage = (total / monthlyBudget) * 100;
-
-        progressBar.style.width =
-            Math.min(percentage, 100) + "%";
-
-        if (percentage >= 100) {
-            progressBar.style.backgroundColor = "#d64545";
-            budgetMessage.textContent =
-                "Budget limit reached or exceeded!";
-            remainingDisplay.style.color = "#d64545";
-        } else if (percentage >= 80) {
-            progressBar.style.backgroundColor = "#e69b25";
-            budgetMessage.textContent =
-                "Warning! You have used " +
-                percentage.toFixed(0) + "% of your budget.";
-            remainingDisplay.style.color = "#e69b25";
-        } else {
-            progressBar.style.backgroundColor = "#6c4ab6";
-            budgetMessage.textContent =
-                "You have used " + percentage.toFixed(0) +
-                "% of your monthly budget.";
-            remainingDisplay.style.color = "#16803c";
-        }
-    } else {
-        progressBar.style.width = "0%";
-        progressBar.style.backgroundColor = "#6c4ab6";
-        budgetMessage.textContent =
-            "Set your monthly budget to track your spending.";
-        remainingDisplay.style.color = "#16803c";
-    }
-
-    budgetInput.value = monthlyBudget > 0 ? monthlyBudget : "";
+header h1 {
+  margin-bottom: 8px;
+  color: #3730a3;
 }
 
-// Display current month's expenses
-function displayExpenses() {
-    expenseList.innerHTML = "";
-
-    const monthlyExpenses = expenses.filter(function(expense) {
-        return expense.date === currentMonth;
-    });
-
-    emptyMessage.style.display =
-        monthlyExpenses.length === 0 ? "block" : "none";
-
-    monthlyExpenses.forEach(function(expense) {
-        const listItem = document.createElement("li");
-
-        listItem.appendChild(
-            document.createTextNode(
-                expense.name + " - ₹" +
-                expense.amount.toFixed(2) +
-                " (" + expense.category + ") "
-            )
-        );
-
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Delete";
-
-        deleteButton.addEventListener("click", function() {
-            expenses = expenses.filter(function(item) {
-                return item.id !== expense.id;
-            });
-
-            saveExpenses();
-            displayExpenses();
-            updateBudgetSummary();
-        });
-
-        listItem.appendChild(deleteButton);
-        expenseList.appendChild(listItem);
-    });
-
-    updateBudgetSummary();
+header p {
+  margin-top: 0;
+  color: #6b7280;
 }
 
-// Save the monthly budget
-budgetForm.addEventListener("submit", function(event) {
-    event.preventDefault();
+.card {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
 
-    const newBudget = Number(budgetInput.value);
+.card h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
 
-    if (!Number.isFinite(newBudget) || newBudget <= 0) {
-        alert("Please enter a budget greater than zero.");
-        return;
-    }
+.budget-form label,
+.expense-form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: bold;
+}
 
-    monthlyBudget = newBudget;
-    budgets[currentMonth] = monthlyBudget;
+.input-row {
+  display: flex;
+  gap: 10px;
+}
 
-    saveBudgets();
-    updateBudgetSummary();
+input,
+select,
+button {
+  min-height: 42px;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
 
-    alert("Monthly budget saved successfully!");
-});
+input,
+select {
+  width: 100%;
+  background: #fff;
+}
 
-// Add a new expense
-form.addEventListener("submit", function(event) {
-    event.preventDefault();
+button {
+  color: #fff;
+  background: #4f46e5;
+  border: 0;
+  cursor: pointer;
+  font-weight: bold;
+}
 
-    const name = expenseName.value.trim();
-    const amount = Number(expenseAmount.value);
-    const selectedCategory = category.value;
+button:hover {
+  background: #4338ca;
+}
 
-    if (
-        name === "" ||
-        !Number.isFinite(amount) ||
-        amount <= 0
-    ) {
-        alert("Please enter a valid name and amount!");
-        return;
-    }
+.input-row button {
+  flex-shrink: 0;
+}
 
-    const newExpense = {
-        id: Date.now() + Math.random(),
-        name: name,
-        amount: amount,
-        category: selectedCategory,
-        date: currentMonth
-    };
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
 
-    expenses.push(newExpense);
+.summary-card {
+  margin: 0;
+}
 
-    saveExpenses();
-    displayExpenses();
+.summary-card h2 {
+  color: #6b7280;
+  font-size: 15px;
+}
 
-    form.reset();
-});
+.summary-card p {
+  margin: 0;
+  color: #3730a3;
+  font-size: 24px;
+  font-weight: bold;
+}
 
-// Show saved data when the website opens
-displayExpenses();
+.expense-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.add-button {
+  align-self: end;
+}
+
+.message {
+  min-height: 18px;
+  margin-bottom: 0;
+  color: #047857;
+  font-size: 14px;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 320px;
+}
+
+.empty-message {
+  color: #6b7280;
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.delete-button {
+  min-height: auto;
+  padding: 7px 10px;
+  background: #dc2626;
+}
+
+.delete-button:hover {
+  background: #b91c1c;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 16px 10px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .expense-form {
+    grid-template-columns: 1fr;
+  }
+
+  .input-row {
+    flex-direction: column;
+  }
+
+  .chart-container {
+    height: 260px;
+  }
+}
