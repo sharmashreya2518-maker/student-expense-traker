@@ -1,198 +1,238 @@
-* {
-  box-sizing: border-box;
-}
+const STORAGE_KEY = "studentExpenseTrackerData";
 
-body {
-  margin: 0;
-  padding: 24px 16px;
-  font-family: Arial, sans-serif;
-  color: #1f2937;
-  background: #f3f4f6;
-}
+let expenses = [];
+let budget = 0;
+let categoryChart = null;
 
-.app {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-}
+const budgetForm = document.getElementById("budgetForm");
+const budgetInput = document.getElementById("budgetInput");
+const budgetMessage = document.getElementById("budgetMessage");
 
-header {
-  margin-bottom: 24px;
-  text-align: center;
-}
+const expenseForm = document.getElementById("expenseForm");
+const expenseNameInput = document.getElementById("expenseName");
+const expenseAmountInput = document.getElementById("expenseAmount");
+const expenseCategoryInput = document.getElementById("expenseCategory");
+const expenseDateInput = document.getElementById("expenseDate");
+const expenseMessage = document.getElementById("expenseMessage");
 
-header h1 {
-  margin-bottom: 8px;
-  color: #3730a3;
-}
+const budgetTotal = document.getElementById("budgetTotal");
+const monthlyTotal = document.getElementById("monthlyTotal");
+const remainingTotal = document.getElementById("remainingTotal");
+const expenseList = document.getElementById("expenseList");
+const emptyMessage = document.getElementById("emptyMessage");
 
-header p {
-  margin-top: 0;
-  color: #6b7280;
-}
+function loadData() {
+  try {
+    const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
-.card {
-  margin-bottom: 20px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
-}
-
-.card h2 {
-  margin-top: 0;
-  font-size: 20px;
-}
-
-.budget-form label,
-.expense-form label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.input-row {
-  display: flex;
-  gap: 10px;
-}
-
-input,
-select,
-button {
-  min-height: 42px;
-  padding: 10px 12px;
-  font: inherit;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-}
-
-input,
-select {
-  width: 100%;
-  background: #fff;
-}
-
-button {
-  color: #fff;
-  background: #4f46e5;
-  border: 0;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-button:hover {
-  background: #4338ca;
-}
-
-.input-row button {
-  flex-shrink: 0;
-}
-
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-card {
-  margin: 0;
-}
-
-.summary-card h2 {
-  color: #6b7280;
-  font-size: 15px;
-}
-
-.summary-card p {
-  margin: 0;
-  color: #3730a3;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.expense-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-.add-button {
-  align-self: end;
-}
-
-.message {
-  min-height: 18px;
-  margin-bottom: 0;
-  color: #047857;
-  font-size: 14px;
-}
-
-.chart-container {
-  position: relative;
-  width: 100%;
-  height: 320px;
-}
-
-.empty-message {
-  color: #6b7280;
-}
-
-.table-wrapper {
-  width: 100%;
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-th,
-td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-th {
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.delete-button {
-  min-height: auto;
-  padding: 7px 10px;
-  background: #dc2626;
-}
-
-.delete-button:hover {
-  background: #b91c1c;
-}
-
-@media (max-width: 600px) {
-  body {
-    padding: 16px 10px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .expense-form {
-    grid-template-columns: 1fr;
-  }
-
-  .input-row {
-    flex-direction: column;
-  }
-
-  .chart-container {
-    height: 260px;
+    if (savedData) {
+      expenses = Array.isArray(savedData.expenses) ? savedData.expenses : [];
+      budget = Number(savedData.budget) || 0;
+    }
+  } catch (error) {
+    expenses = [];
+    budget = 0;
   }
 }
+
+function saveData() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ expenses, budget })
+  );
+}
+
+function formatMoney(amount) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR"
+  }).format(amount);
+}
+
+function getCurrentMonthExpenses() {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  return expenses.filter((expense) => {
+    const date = new Date(`${expense.date}T00:00:00`);
+    return date.getMonth() === currentMonth &&
+      date.getFullYear() === currentYear;
+  });
+}
+
+function renderSummary() {
+  const monthExpenses = getCurrentMonthExpenses();
+  const total = monthExpenses.reduce(
+    (sum, expense) => sum + (Number(expense.amount) || 0),
+    0
+  );
+
+  budgetTotal.textContent = formatMoney(budget);
+  monthlyTotal.textContent = formatMoney(total);
+  remainingTotal.textContent = formatMoney(budget - total);
+}
+
+function renderExpenses() {
+  const monthExpenses = getCurrentMonthExpenses();
+
+  expenseList.innerHTML = "";
+  emptyMessage.hidden = monthExpenses.length > 0;
+
+  monthExpenses
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .forEach((expense) => {
+      const row = document.createElement("tr");
+
+      const nameCell = document.createElement("td");
+      nameCell.textContent = expense.name;
+
+      const categoryCell = document.createElement("td");
+      categoryCell.textContent = expense.category;
+
+      const dateCell = document.createElement("td");
+      dateCell.textContent = expense.date;
+
+      const amountCell = document.createElement("td");
+      amountCell.textContent = formatMoney(Number(expense.amount) || 0);
+
+      const actionCell = document.createElement("td");
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "delete-button";
+      deleteButton.textContent = "Delete";
+      deleteButton.dataset.id = expense.id;
+      actionCell.appendChild(deleteButton);
+
+      row.append(nameCell, categoryCell, dateCell, amountCell, actionCell);
+      expenseList.appendChild(row);
+    });
+}
+
+function updateCategoryChart() {
+  const canvas = document.getElementById("categoryChart");
+
+  if (!canvas || typeof Chart === "undefined") {
+    return;
+  }
+
+  const totals = {};
+
+  getCurrentMonthExpenses().forEach((expense) => {
+    const category = expense.category || "Other";
+    totals[category] = (totals[category] || 0) + (Number(expense.amount) || 0);
+  });
+
+  const labels = Object.keys(totals);
+  const values = Object.values(totals);
+
+  if (categoryChart) {
+    categoryChart.destroy();
+  }
+
+  categoryChart = new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: labels.length ? labels : ["No expenses yet"],
+      datasets: [{
+        data: values.length ? values : [1],
+        backgroundColor: [
+          "#4f46e5",
+          "#06b6d4",
+          "#f59e0b",
+          "#10b981",
+          "#ef4444",
+          "#8b5cf6",
+          "#ec4899"
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom"
+        }
+      }
+    }
+  });
+}
+
+function renderApp() {
+  renderSummary();
+  renderExpenses();
+  updateCategoryChart();
+}
+
+budgetForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const newBudget = Number(budgetInput.value);
+
+  if (!Number.isFinite(newBudget) || newBudget < 0) {
+    budgetMessage.textContent = "Budget should be 0 or more.";
+    return;
+  }
+
+  budget = newBudget;
+  saveData();
+  renderApp();
+
+  budgetInput.value = "";
+  budgetMessage.textContent = "Budget saved.";
+});
+
+expenseForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const name = expenseNameInput.value.trim();
+  const amount = Number(expenseAmountInput.value);
+  const category = expenseCategoryInput.value;
+  const date = expenseDateInput.value;
+
+  if (!name || !Number.isFinite(amount) || amount <= 0 || !category || !date) {
+    expenseMessage.textContent = "Add details correctly.";
+    return;
+  }
+
+  expenses.push({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    amount,
+    category,
+    date
+  });
+
+  saveData();
+  renderApp();
+  expenseForm.reset();
+  setTodayAsDefaultDate();
+  expenseMessage.textContent = "Expense added.";
+});
+
+expenseList.addEventListener("click", (event) => {
+  const button = event.target.closest(".delete-button");
+
+  if (!button) {
+    return;
+  }
+
+  expenses = expenses.filter((expense) => expense.id !== button.dataset.id);
+  saveData();
+  renderApp();
+});
+
+function setTodayAsDefaultDate() {
+  const today = new Date();
+  const localDate = new Date(today.getTime() - today.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 10);
+
+  expenseDateInput.value = localDate;
+}
+
+loadData();
+setTodayAsDefaultDate();
+renderApp();
