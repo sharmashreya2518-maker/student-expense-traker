@@ -36,10 +36,7 @@ function loadData() {
 }
 
 function saveData() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({ expenses, budget })
-  );
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ expenses, budget }));
 }
 
 function formatMoney(amount) {
@@ -117,15 +114,17 @@ function updateCategoryChart() {
     return;
   }
 
-  const totals = {};
+  const categoryTotals = {};
 
   getCurrentMonthExpenses().forEach((expense) => {
     const category = expense.category || "Other";
-    totals[category] = (totals[category] || 0) + (Number(expense.amount) || 0);
+    const amount = Number(expense.amount) || 0;
+
+    categoryTotals[category] = (categoryTotals[category] || 0) + amount;
   });
 
-  const labels = Object.keys(totals);
-  const values = Object.values(totals);
+  const labels = Object.keys(categoryTotals);
+  const values = Object.values(categoryTotals);
 
   if (categoryChart) {
     categoryChart.destroy();
@@ -172,7 +171,7 @@ budgetForm.addEventListener("submit", (event) => {
   const newBudget = Number(budgetInput.value);
 
   if (!Number.isFinite(newBudget) || newBudget < 0) {
-    budgetMessage.textContent = "Budget should be 0 or more.";
+    budgetMessage.textContent = "Please enter a valid budget.";
     return;
   }
 
@@ -193,7 +192,7 @@ expenseForm.addEventListener("submit", (event) => {
   const date = expenseDateInput.value;
 
   if (!name || !Number.isFinite(amount) || amount <= 0 || !category || !date) {
-    expenseMessage.textContent = "Add details correctly.";
+    expenseMessage.textContent = "Please fill in all fields correctly.";
     return;
   }
 
