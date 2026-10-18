@@ -10,22 +10,15 @@
   <main class="app">
     <header>
       <h1>Student Expense Tracker</h1>
-      <p>Apna budget aur kharche track karo</p>
+      <p>Track your budget and expenses</p>
     </header>
 
-    <section class="card budget-card">
+    <section class="card">
       <h2>Monthly Budget</h2>
       <form id="budgetForm" class="budget-form">
         <label for="budgetInput">Budget amount (₹)</label>
         <div class="input-row">
-          <input
-            id="budgetInput"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="Jaise 5000"
-            required
-          >
+          <input id="budgetInput" type="number" min="0" step="0.01" placeholder="5000" required>
           <button type="submit">Save Budget</button>
         </div>
       </form>
@@ -52,7 +45,7 @@
       <form id="expenseForm" class="expense-form">
         <div>
           <label for="expenseName">Expense name</label>
-          <input id="expenseName" type="text" placeholder="Jaise Lunch" required>
+          <input id="expenseName" type="text" placeholder="Lunch" required>
         </div>
 
         <div>
@@ -83,16 +76,16 @@
       <p id="expenseMessage" class="message"></p>
     </section>
 
-    <section class="card chart-card">
+    <section class="card">
       <h2>Category-wise Expenses (This Month)</h2>
       <div class="chart-container">
-        <canvas id="categoryChart" aria-label="Category-wise expenses chart"></canvas>
+        <canvas id="categoryChart"></canvas>
       </div>
     </section>
 
     <section class="card">
       <h2>This Month's Expenses</h2>
-      <p id="emptyMessage" class="empty-message">Abhi is month ka koi expense nahi hai.</p>
+      <p id="emptyMessage" class="empty-message">No expenses for this month yet.</p>
       <div class="table-wrapper">
         <table>
           <thead>
@@ -110,6 +103,7 @@
     </section>
   </main>
 
+  <!-- Load Chart.js before script.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="script.js"></script>
 </body>
